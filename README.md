@@ -1,10 +1,10 @@
-# CodeCrafter XR
+# CodeXR
 
 Build and deploy web applications in Extended Reality with AI assistance.
 
 ## Overview
 
-CodeCrafter XR is a WebXR application that allows developers to create simple web applications using HTML, CSS, and JavaScript directly in virtual reality. By combining spatial computing with large language model assistance, CodeCrafter XR makes web development more intuitive and accessible.
+CodeXR is a WebXR application that allows developers to create simple web applications using HTML, CSS, and JavaScript directly in virtual reality. By combining spatial computing with large language model assistance, CodeXR makes web development more intuitive and accessible.
 
 ## Features
 
