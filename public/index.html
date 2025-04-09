@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeCrafter XR</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .editor-panel {
+      flex: 1;
+      padding: 20px;
+      border-right: 1px solid #333;
+      overflow-y: auto;
+    }
+    
+    .preview-panel {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .code-editor {
+      width: 100%;
+      height: 200px;
+      margin-bottom: 20px;
+      background-color: #282c34;
+      color: #abb2bf;
+      border: 1px solid #555;
+      font-family: monospace;
+      padding: 10px;
+      resize: vertical;
+    }
+    
+    .panel-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #4a86e8;
+    }
+    
+    button {
+      background-color: #4a86e8;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 16px;
+    }
+    
+    button:hover {
+      background-color: #6d9eeb;
+    }
+    
+    #preview-container {
+      flex: 1;
+      background-color: white;
+      border: 1px solid #555;
+      width: 100%;
+      min-height: 400px;
+      overflow: auto;
+      color: black;
+    }
+    
+    #llm-input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #282c34;
+      color: #abb2bf;
+      border: 1px solid #555;
+      font-family: Arial, sans-serif;
+    }
+    
+    #exit-vr-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- 2D Interface -->
+  <div class="container" id="desktop-interface">
+    <div class="editor-panel">
+      <div class="panel-title">HTML</div>
+      <textarea id="html-editor" class="code-editor"><h1>Hello World</h1>
+<p>Welcome to my XR web app!</p></textarea>
+      
+      <div class="panel-title">CSS</div>
+      <textarea id="css-editor" class="code-editor">body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+h1 {
+  color: blue;
+}
+
+p {
+  color: #333;
+}</textarea>
+      
+      <div class="panel-title">JavaScript</div>
+      <textarea id="js-editor" class="code-editor">// Add a click event to the heading
+document.addEventListener("DOMContentLoaded", function() {
+  const heading = document.querySelector('h1');
+  if (heading) {
+    heading.addEventListener('click', function() {
+      alert('Hello from CodeCrafter XR!');
+    });
+  }
+});</textarea>
+      
+      <div class="panel-title">AI Assistant</div>
+      <textarea id="llm-input" placeholder="Ask AI to help with your code..."></textarea>
+      <button id="send-to-llm">Ask AI</button>
+      <button id="update-preview">Update Preview</button>
+      <button id="enter-vr">Enter VR Mode</button>
+    </div>
+    
+    <div class="preview-panel">
+      <div class="panel-title">Live Preview</div>
+      <div id="preview-container"></div>
+    </div>
+  </div>
+  
+  <!-- Exit VR Button (fixed position) -->
+  <button id="exit-vr-button">Exit VR</button>
+
+  <!-- A-Frame scene for XR mode -->
+  <a-scene id="xr-scene" style="display: none;">
+    <a-assets>
+      <!-- Preload assets -->
+      <img id="grid" src="https://cdn.glitch.global/1adb3a71-6eb5-43d6-a3a2-e2ca99812142/grid.png?v=1674082061594" crossorigin="anonymous">
+    </a-assets>
+    
+    <!-- Environment -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="10" height="10" color="#333" material="src: #grid; repeat: 10 10;"></a-plane>
+    <a-sky color="#1e1e1e"></a-sky>
+    
+    <!-- Code panels -->
+    <a-entity id="code-panels" position="0 1.6 -2">
+      <!-- HTML Panel -->
+      <a-entity id="html-panel" position="-1 0 0" rotation="0 0 0">
+        <a-plane width="0.9" height="1.2" color="#282c34" class="interactive">
+          <a-text id="html-panel-title" value="HTML" position="0 0.55 0.01" align="center" color="#4a86e8" scale="0.2 0.2 0.2"></a-text>
+          <a-plane width="0.8" height="0.9" position="0 -0.1 0.01" color="#333">
+            <a-text id="html-code-text" value="" align="left" baseline="top" position="-0.38 0.43 0.01" width="0.75" color="white" scale="0.2 0.2 0.2"></a-text>
+          </a-plane>
+        </a-plane>
+      </a-entity>
+      
+      <!-- CSS Panel -->
+      <a-entity id="css-panel" position="0 0 0" rotation="0 0 0">
+        <a-plane width="0.9" height="1.2" color="#282c34" class="interactive">
+          <a-text id="css-panel-title" value="CSS" position="0 0.55 0.01" align="center" color="#4a86e8" scale="0.2 0.2 0.2"></a-text>
+          <a-plane width="0.8" height="0.9" position="0 -0.1 0.01" color="#333">
+            <a-text id="css-code-text" value="" align="left" baseline="top" position="-0.38 0.43 0.01" width="0.75" color="white" scale="0.2 0.2 0.2"></a-text>
+          </a-plane>
+        </a-plane>
+      </a-entity>
+      
+      <!-- JS Panel -->
+      <a-entity id="js-panel" position="1 0 0" rotation="0 0 0">
+        <a-plane width="0.9" height="1.2" color="#282c34" class="interactive">
+          <a-text id="js-panel-title" value="JavaScript" position="0 0.55 0.01" align="center" color="#4a86e8" scale="0.2 0.2 0.2"></a-text>
+          <a-plane width="0.8" height="0.9" position="0 -0.1 0.01" color="#333">
+            <a-text id="js-code-text" value="" align="left" baseline="top" position="-0.38 0.43 0.01" width="0.75" color="white" scale="0.2 0.2 0.2"></a-text>
+          </a-plane>
+        </a-plane>
+      </a-entity>
+    </a-entity>
+    
+    <!-- Preview Panel -->
+    <a-entity id="preview-panel" position="0 1.6 -3.5" rotation="0 0 0">
+      <a-plane width="1.8" height="1.2" color="#282c34" class="interactive">
+        <a-text value="PREVIEW" position="0 0.55 0.01" align="center" color="#4a86e8" scale="0.2 0.2 0.2"></a-text>
+        <a-plane id="preview-display" width="1.6" height="0.9" position="0 -0.1 0.01" color="white"></a-plane>
+      </a-plane>
+    </a-entity>
+    
+    <!-- Camera and controls -->
+    <a-entity camera="active: true" position="0 1.6 0" look-controls wasd-controls>
+      <a-entity cursor="rayOrigin: mouse" raycaster="far: 20; objects: .interactive"></a-entity>
+    </a-entity>
+    
+    <!-- Controllers -->
+    <a-entity id="leftHand" laser-controls="hand: left" raycaster="objects: .interactive;"></a-entity>
+    <a-entity id="rightHand" laser-controls="hand: right" raycaster="objects: .interactive;"></a-entity>
+  </a-scene>
+
+  <script>
+    // Update the preview display
+    function updatePreview() {
+      console.log('Updating preview...');
+      
+      // Get content from editors
+      const htmlContent = document.getElementById('html-editor').value;
+      const cssContent = document.getElementById('css-editor').value;
+      const jsContent = document.getElementById('js-editor').value;
+      
+      // Get the preview container
+      const previewContainer = document.getElementById('preview-container');
+      
+      // Clear existing content
+      previewContainer.innerHTML = '';
+      
+      // Create a style element for CSS
+      const styleElement = document.createElement('style');
+      styleElement.textContent = cssContent;
+      previewContainer.appendChild(styleElement);
+      
+      // Add HTML content
+      previewContainer.innerHTML += htmlContent;
+      
+      // Add JavaScript using a separate script
+      const scriptElement = document.createElement('script');
+      scriptElement.textContent = jsContent;
+      previewContainer.appendChild(scriptElement);
+      
+      // Update VR preview panels if in VR mode
+      updateVRCodePanels();
+      
+      console.log('Preview updated!');
+    }
+    
+    // Update the VR code panels with current code
+    function updateVRCodePanels() {
+      // Update HTML panel
+      const htmlContent = document.getElementById('html-editor').value;
+      const htmlTextElement = document.getElementById('html-code-text');
+      if (htmlTextElement) {
+        // For simplicity, just show the first 30 lines or less
+        const htmlLines = htmlContent.split('\n').slice(0, 30).join('\n');
+        htmlTextElement.setAttribute('value', htmlLines);
+      }
+      
+      // Update CSS panel
+      const cssContent = document.getElementById('css-editor').value;
+      const cssTextElement = document.getElementById('css-code-text');
+      if (cssTextElement) {
+        const cssLines = cssContent.split('\n').slice(0, 30).join('\n');
+        cssTextElement.setAttribute('value', cssLines);
+      }
+      
+      // Update JS panel
+      const jsContent = document.getElementById('js-editor').value;
+      const jsTextElement = document.getElementById('js-code-text');
+      if (jsTextElement) {
+        const jsLines = jsContent.split('\n').slice(0, 30).join('\n');
+        jsTextElement.setAttribute('value', jsLines);
+      }
+    }
+    
+    // Enter VR mode
+    function enterVRMode() {
+      console.log('Entering VR mode...');
+      
+      // Hide desktop interface
+      document.getElementById('desktop-interface').style.display = 'none';
+      
+      // Show VR scene
+      const scene = document.getElementById('xr-scene');
+      scene.style.display = 'block';
+      
+      // Show exit button
+      document.getElementById('exit-vr-button').style.display = 'block';
+      
+      // Update the VR code panels with current code
+      updateVRCodePanels();
+      
+      // Enter VR
+      if (scene.is('vr-mode')) {
+        console.log('Already in VR mode');
+      } else {
+        scene.enterVR();
+      }
+    }
+    
+    // Exit VR mode
+    function exitVRMode() {
+      console.log('Exiting VR mode...');
+      
+      // Show desktop interface
+      document.getElementById('desktop-interface').style.display = 'flex';
+      
+      // Hide VR scene and exit button
+      document.getElementById('xr-scene').style.display = 'none';
+      document.getElementById('exit-vr-button').style.display = 'none';
+      
+      // Exit VR if needed
+      const scene = document.getElementById('xr-scene');
+      if (scene.is('vr-mode')) {
+        scene.exitVR();
+      }
+    }
+    
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Update preview initially
+      updatePreview();
+      
+      // Add event listener for the update button
+      document.getElementById('update-preview').addEventListener('click', updatePreview);
+      
+      // Enter VR button
+      document.getElementById('enter-vr').addEventListener('click', enterVRMode);
+      
+      // Exit VR button
+      document.getElementById('exit-vr-button').addEventListener('click', exitVRMode);
+      
+      // Listen for VR mode changes
+      const scene = document.getElementById('xr-scene');
+      scene.addEventListener('enter-vr', function() {
+        console.log('Entered VR mode');
+      });
+      
+      scene.addEventListener('exit-vr', function() {
+        console.log('Exited VR mode');
+        
+        // Auto-exit the VR interface when the headset is removed
+        if (document.getElementById('desktop-interface').style.display === 'none') {
+          exitVRMode();
+        }
+      });
+      
+      // Simulate AI response
+      document.getElementById('send-to-llm').addEventListener('click', function() {
+        const prompt = document.getElementById('llm-input').value;
+        
+        if (prompt.toLowerCase().includes('red button')) {
+          const html = document.getElementById('html-editor');
+          html.value += '\n<button id="hello-button">Hello</button>';
+          
+          const css = document.getElementById('css-editor');
+          css.value += '\n\n#hello-button {\n  background-color: red;\n  color: white;\n  padding: 10px 20px;\n  border: none;\n  border-radius: 5px;\n  cursor: pointer;\n}';
+          
+          updatePreview();
+          
+          alert('AI has added a red button to your app!');
+        } else {
+          alert('Try asking the AI to "add a red button"');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
